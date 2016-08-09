@@ -9,7 +9,7 @@ namespace BLocal.Web.Manager.Extensions
         {
             if (null == session || null == variableNames)
                 return;
-
+            String var = "\\'";
             foreach (var variableName in variableNames)
                 session[variableName] = null;
         }
@@ -17,7 +17,7 @@ namespace BLocal.Web.Manager.Extensions
         /// <summary>
         /// Sets the value in session, clearing any previous values
         /// </summary>
-        public static void Set(this HttpSessionStateBase session, String valueName , Object value)
+        public static void Set<T>(this HttpSessionStateBase session, String valueName , T value)
         {
             if(null == session)
                 return;
@@ -32,6 +32,14 @@ namespace BLocal.Web.Manager.Extensions
                 return null;
 
             return session[valueName] as T;
+        }
+
+        public static T GetOrSetDefault<T>(this HttpSessionStateBase session, String valueName, T defaultValue) where T : class
+        {
+            if (null == session || String.IsNullOrWhiteSpace(valueName))
+                return null;
+
+            return session[valueName] as T ?? (T)(session[valueName] = defaultValue);
         }
     }
 }

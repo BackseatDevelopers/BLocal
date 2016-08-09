@@ -1,86 +1,154 @@
-﻿@using BLocal.Web.Manager.Configuration
-@model BLocal.Web.Manager.Models.ConnectionData
+﻿@using BLocal.Core
+@using BLocal.Web.Manager.Configuration
+@using BLocal.Web.Manager.Controllers
+@using BLocal.Web.Manager.Models.AutomaticSynchronization
 @{
     ViewBag.Title = "Localization Manager";
 }
 @section Head {
     <script type="text/javascript">
-        $(document).ready(function() {
-            $("select[name='providerConfigName']").change(function() {
-                $(this).parents("form").submit();
-            });
-            $("select[name='rightConfigName'], select[name='leftConfigName']").change(function() {
-                if ($("select[name='rightConfigName']").val() != "loc-flar" && $("select[name='leftConfigName']").val() != "loc-flar")
-                    $(this).parents("form").submit();
-            });
-        });
     </script>
 }
 
-<h1>Localization Manager</h1>
+<h1>Localization Manager - <span class="accent">@Session["Author"]</span></h1>
 
 <section class="general">
-    <h2>Direct Editing</h2>
-    <p>Manually edit (find, add, change, remove) any parts of the localization in any language. If caching is turned on in connected applications, changes will not immediately be visible and a manual refresh of said cache is recommended after editing.</p>
-    @using (Html.BeginForm("LoadLocalization", "Home", FormMethod.Post))
+    <h2>Manual editing</h2>
+    @using (Html.BeginForm("Index", "DirectEditing", FormMethod.Get))
     {
-        <select name="providerConfigName">
-            <option>Select a connection to get started.</option>
-            @foreach (var config in ProviderConfig.ProviderPairs)
-            {
-                <option>@config.Name</option>
-            }
-        </select>
+        <p>
+            <select name="providerConfigName">
+                @foreach (var config in ProviderConfig.ProviderGroups)
+                {
+                    <option>@config.Name</option>
+                }
+            </select>
+            <button type="submit">Edit</button>
+        </p>
+    }
+</section>
+
+<section class="general">
+    <h2>View history</h2>
+    @using (Html.BeginForm("Index", "History", FormMethod.Get))
+    {
+        <p>
+            <select name="providerConfigName">
+                @foreach (var config in ProviderConfig.ProviderGroups)
+                {
+                    <option>@config.Name</option>
+                }
+            </select>
+            <button type="submit">View</button>
+        </p>
     }
 </section>
     
 <section class="general left">
-    <h2>Transparant Synchronization</h2>
-    <p>Editing should rarely be done directly into the production environment. Using this feature, you can edit in your test (or dev or staging) environment and synchronize directly to production!</p>
-    @using (Html.BeginForm("Synchronize", "Home", FormMethod.Post))
+    <h2>Manual Synchronization</h2>
+    @using (Html.BeginForm("Index", "ManualSynchronization", FormMethod.Get))
     {
-        <select name="leftConfigName">
-            <option value="loc-flar">Select two providers to get a synrchronization overview.</option>
-            @foreach (var config in ProviderConfig.ProviderPairs)
-            {
-                <option>@config.Name</option>
-            }
-        </select>
-        <select name="rightConfigName">
-            <option value="loc-flar">Select two providers to get a synrchronization overview.</option>
-            @foreach (var config in ProviderConfig.ProviderPairs)
-            {
-                <option>@config.Name</option>
-            }
-        </select>
-    }
-</section>
-    
-<section class="general">
-    <h2>Translation Verification</h2>
-    <p>Track missing translations across all locales and fix them up.</p>
-    @using (Html.BeginForm("LoadTranslations", "Home", FormMethod.Post))
-    {
-        <select name="providerConfigName">
-            <option>Select a connection to get started.</option>
-            @foreach (var config in ProviderConfig.ProviderPairs)
-            {
-                <option>@config.Name</option>
-            }
-        </select>
+        <p>
+            between
+            <select name="leftConfigName">
+                @foreach (var config in ProviderConfig.ProviderGroups)
+                {
+                    <option>@config.Name</option>
+                }
+            </select>
+            and
+            <select name="rightConfigName">
+                @foreach (var config in ProviderConfig.ProviderGroups)
+                {
+                    <option>@config.Name</option>
+                }
+            </select>
+            <button type="submit">Start</button>
+        </p>
     }
 </section>
 <section class="general">
     <h2>Import / Export</h2>
-    <p>CSV and XML import and export</p>
-    @using (Html.BeginForm("ShowImportExport", "Home", FormMethod.Post))
+    @using (Html.BeginForm("Index", "ImportExport", FormMethod.Get))
     {
         <select name="providerConfigName">
-            <option>Select a connection to get started.</option>
-            @foreach (var config in ProviderConfig.ProviderPairs)
+            @foreach (var config in ProviderConfig.ProviderGroups)
             {
                 <option>@config.Name</option>
             }
         </select>
+        <button type="submit">Start</button>
     }
+</section>
+<section class="general">
+    <h2>Verify translations across locales</h2>
+    @using (Html.BeginForm("Index", "TranslationVerification", FormMethod.Get))
+    {
+        <select name="providerConfigName">
+            @foreach (var config in ProviderConfig.ProviderGroups)
+            {
+                <option>@config.Name</option>
+            }
+        </select>
+        <button type="submit">Start</button>
+    }
+</section>
+<section class="general left">
+    <h2>Automatic Synchronization</h2>
+    @using (Html.BeginForm("Index", "AutomaticSynchronization", FormMethod.Get, new { target="_blank" }))
+    {
+        <p>
+            between
+            <select name="LeftProviderGroupName">
+                @foreach (var config in ProviderConfig.ProviderGroups)
+                {
+                    <option>@config.Name</option>
+                }
+            </select>
+            and
+            <select name="RightProviderGroupName">
+                @foreach (var config in ProviderConfig.ProviderGroups)
+                {
+                    <option>@config.Name</option>
+                }
+            </select>
+        </p>
+        <p>
+            When a value is added on the right, resolve using
+            <select name="LeftMissingStrategy">
+                @foreach (var missingStrategyName in Enum.GetNames(typeof(SynchronizationSettings.MissingResolutionStrategy)))
+                {
+                    <option>@missingStrategyName</option>
+                }
+            </select>
+        </p>
+        <p>
+            When a value is added on the left, resolve using
+            <select name="RightMissingStrategy">
+                @foreach (var missingStrategyName in Enum.GetNames(typeof(SynchronizationSettings.MissingResolutionStrategy)))
+                {
+                    <option>@missingStrategyName</option>
+                }
+            </select>
+        </p>
+        <p>
+            When the two environments have different values, resolve using
+            <select name="DifferingStrategy">
+                @foreach (var differingStrategyName in Enum.GetNames(typeof(SynchronizationSettings.DifferingResolutionStrategy)))
+                {
+                    <option>@differingStrategyName</option>
+                }
+            </select>
+        </p>
+        <p>
+            <select name="Execute">
+                <option value="false">Just show output</option>
+                <option value="true">Execute for real</option>
+            </select>
+            <button type="submit">Start</button>
+        </p>
+    }
+</section>
+<section class="general left">
+    Localization Manager Version: @System.Reflection.Assembly.GetAssembly(typeof(HomeController)).GetName().Version
 </section>

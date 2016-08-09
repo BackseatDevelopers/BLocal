@@ -6,8 +6,16 @@ namespace BLocal.Core
     /// <summary>
     /// Provides management of localized values (creating, reading, updating, deleting)
     /// </summary>
-    public interface ILocalizedValueManager : ILocalizedValueProvider
+    public interface ILocalizedValueManager
     {
+        /// <summary>
+        /// When implemented, returns the Fully Qualified value for a specified qualifier
+        /// </summary>
+        /// <param name="qualifier">Unique qualifier</param>
+        /// <param name="defaultValue">Default value to be used if applicable</param>
+        /// <returns></returns>
+        QualifiedValue GetQualifiedValue(Qualifier.Unique qualifier, String defaultValue = null);
+
         /// <summary>
         /// When implemented, tries to update a localized value. If that doesn't work, tries to create it
         /// </summary>
@@ -28,28 +36,19 @@ namespace BLocal.Core
         IEnumerable<QualifiedValue> GetAllValuesQualified();
 
         /// <summary>
-        /// When implemented, returns all audits for qualifiers
-        /// </summary>
-        /// <returns></returns>
-        IEnumerable<LocalizationAudit> GetAudits();
-
-        /// <summary>
-        /// When implemented, overrides all audits internally
-        /// </summary>
-        /// <returns></returns>
-        void SetAudits(IEnumerable<LocalizationAudit> audits); 
-
-        /// <summary>
         /// When implemented, removes a value completely from the system
         /// </summary>
         /// <param name="qualifier"></param>
         void DeleteValue(Qualifier.Unique qualifier);
 
         /// <summary>
-        /// When implemented, removes all values of all localizations, for a given part / key combination, from the system
+        /// When implemented, persists all non-persisted values (if applicable)
         /// </summary>
-        /// <param name="part">The part for which to remove all translations</param>
-        /// <param name="key">The key for which to remove all translations</param>
-        void DeleteLocalizationsFor(Part part, string key);
+        void Persist();
+
+        /// <summary>
+        /// When implemented, un-caches any cached values
+        /// </summary>
+        void Reload();
     }
 }

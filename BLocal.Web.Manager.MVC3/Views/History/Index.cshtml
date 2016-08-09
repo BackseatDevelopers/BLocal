@@ -1,0 +1,23 @@
+﻿@model BLocal.Web.Manager.Models.History.HistoryData
+@{
+    ViewBag.Title = "History";
+}
+<h1>@Html.ActionLink("Home", "Overview", "Home") - History of <span style="color: @Model.Provider.Color">@(Model.Provider.Name)</span></h1>
+<section class="general">
+    <table cellpadding="0" cellspacing="0" class="updates" style="width: 100%"><tbody>
+        @foreach (var history in @Model.History)
+        {
+            var latest = history.LatestEntry();
+            var previous = history.PreviousEntry();
+            <tr class="lrvalue">
+                <td class="">@history.Qualifier</td>
+                <td class="">@latest.DateTimeUtc.ToLocalTime()</td>
+                <td class="">@latest.Author</td>
+                <td style="">
+                    <p class="oldvalue">@(previous == null ? "" : previous.Content)</p>
+                    <p class="value">@latest.Content</p>
+                </td>
+            </tr>
+        }
+    </tbody></table>
+</section>
