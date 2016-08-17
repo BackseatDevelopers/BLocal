@@ -13,7 +13,7 @@ namespace BLocal.Providers
     /// <summary>
     /// Provides localization and logging based off of a Microsoft SQL Database
     /// </summary>
-    public class MSDBValueAndLogProvider : ILocalizedValueManager, ILocalizationLogger
+    public class MSDBValueAndLogProvider : ILocalizedValueManager, ILocalizedValueProvider, ILocalizationLogger
     {
         private readonly String _connectionString;
         private readonly String _databaseName;
@@ -192,14 +192,9 @@ namespace BLocal.Providers
             return _valueTable.GetQualifiedValues(_partTable, _localeTable).Select(v => new QualifiedValue(v.Qualifier, v.Value));
         }
 
-        public IEnumerable<LocalizationAudit> GetAudits()
+        public void Persist()
         {
-            return Enumerable.Empty<LocalizationAudit>();
-        }
-
-        public void SetAudits(IEnumerable<LocalizationAudit> audits)
-        {
-            
+            // all values are already persisted
         }
 
         public void DeleteValue(Qualifier.Unique qualifier)
@@ -210,16 +205,6 @@ namespace BLocal.Providers
                     _localeTable.GetLocale(qualifier.Locale.ToString()).Id,
                     qualifier.Key
                 ), connection);
-        }
-
-        public void DeleteLocalizationsFor(Part part, String key)
-        {
-            using (var connection = Connect()) {
-                var partId = _partTable.GetPart(part.ToString()).Id;
-                foreach (var locale in _localeTable.GetAll())
-                    _valueTable.Delete(new InternalQualifier(partId, locale.Id, key), connection);
-            }
-
         }
 
         public void Log(Qualifier.Unique accessedQualifier)
