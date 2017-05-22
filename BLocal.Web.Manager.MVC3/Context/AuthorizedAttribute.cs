@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using System.Diagnostics;
+using System.Net;
 using System.Web.Mvc;
 using System.Web.Routing;
 
@@ -11,13 +11,12 @@ namespace BLocal.Web.Manager.Context
         public override void OnActionExecuting(ActionExecutingContext filterContext)
         {
             var route = filterContext.RouteData.Values;
-            if (new[]{"index", "authenticate"}.Contains(route["action"].ToString().ToLowerInvariant()) && route["controller"].ToString().ToLowerInvariant() == "home")
+            if (new[]{"index", "authenticate", "googlelogin" }.Contains(route["action"].ToString().ToLowerInvariant()) && route["controller"].ToString().ToLowerInvariant() == "home")
                 return;
 
-            Debug.Assert(filterContext.HttpContext.Session != null, "filterContext.HttpContext.Session != null");
             var lastAuth = filterContext.HttpContext.Session["auth"] as DateTime?;
 
-            if (lastAuth == null || (DateTime.Now - lastAuth) > TimeSpan.FromMinutes(15))
+            if (lastAuth == null)
                 Block(filterContext);
             else
                 filterContext.HttpContext.Session["auth"] = DateTime.Now;
@@ -25,6 +24,12 @@ namespace BLocal.Web.Manager.Context
 
         private static void Block(ActionExecutingContext filterContext)
         {
+            if (filterContext.RequestContext.HttpContext.Request.IsAjaxRequest())
+            {
+                filterContext.Result = new HttpStatusCodeResult((int) HttpStatusCode.Forbidden, "please authenticate");
+                return;
+            }
+
             filterContext.Result = new RedirectToRouteResult(
                 new RouteValueDictionary {
                     {"action", "Index"},

@@ -1,5 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -15,6 +21,17 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <MvcBuildViews>false</MvcBuildViews>
     <UseIISExpress>false</UseIISExpress>
+    <MvcProjectUpgradeChecked>true</MvcProjectUpgradeChecked>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>4.0</OldToolsVersion>
+    <IISExpressSSLPort />
+    <IISExpressAnonymousAuthentication />
+    <IISExpressWindowsAuthentication />
+    <IISExpressUseClassicPipelineMode />
+    <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,6 +50,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <BuildDependsOn>
+      CustomWebConfigTransform;
+      $(BuildDependsOn);
+    </BuildDependsOn>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CsvHelper">
       <HintPath>..\packages\CsvHelper.2.7.1\lib\net40-client\CsvHelper.dll</HintPath>
@@ -41,7 +64,11 @@
       <HintPath>..\ThirdParty\Json.Net\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System.Data.Entity" />
-    <Reference Include="System.Web.Mvc, Version=3.0.0.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
+    <Reference Include="System.Web.Mvc, Version=3.0.0.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\ThirdParty\mvc3\System.Web.Mvc.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Web.WebPages, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Web.Helpers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.CSharp" />
@@ -65,84 +92,119 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Business\HistoryChecker.cs" />
+    <Compile Include="Business\HistoryMerger.cs" />
     <Compile Include="Configuration\ValueProviderConfigurationSection.cs" />
     <Compile Include="Context\AuthorizedAttribute.cs" />
     <Compile Include="Controllers\AutomaticSynchronizationController.cs" />
-    <Compile Include="Controllers\ExternalSynchronizationController.cs" />
+    <Compile Include="Controllers\HistoryController.cs" />
+    <Compile Include="Controllers\TranslationVerificationController.cs" />
+    <Compile Include="Controllers\ImportExportController.cs" />
+    <Compile Include="Controllers\ManualSynchronizationController.cs" />
+    <Compile Include="Controllers\DirectEditingController.cs" />
+    <Compile Include="Models\AutomaticSynchronization\Conflict.cs" />
+    <Compile Include="Models\AutomaticSynchronization\Creation.cs" />
+    <Compile Include="Controllers\RemoteAccessController.cs" />
+    <Compile Include="Models\AutomaticSynchronization\Ignore.cs" />
+    <Compile Include="Models\AutomaticSynchronization\Removal.cs" />
+    <Compile Include="Models\AutomaticSynchronization\SynchronizationResult.cs" />
+    <Compile Include="Models\AutomaticSynchronization\Update.cs" />
+    <Compile Include="Models\DirectEditing\IndexModel.cs" />
+    <Compile Include="Models\GoogleAuthorisation\GoogleToken.cs" />
+    <Compile Include="Models\History\BrokenHistoryData.cs" />
+    <Compile Include="Models\History\HistoryData.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\ExternalSynchronizationRequest.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Business\ImportConfiguration.cs" />
     <Compile Include="Business\ImportData.cs" />
     <Compile Include="Business\ImportExportRecord.cs" />
-    <Compile Include="Business\LocalizedPart.cs" />
+    <Compile Include="Models\DirectEditing\LocalizedPart.cs" />
     <Compile Include="Business\PartNode.cs" />
-    <Compile Include="Business\ProviderPair.cs" />
-    <Compile Include="Business\ProviderPairFactory.cs" />
+    <Compile Include="Business\ProviderGroup.cs" />
+    <Compile Include="Business\ProviderGroupFactory.cs" />
+    <Compile Include="Models\ExternalSynchronization\SynchronizationSession.cs" />
     <Compile Include="Extensions\SessionExtensions.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Models\AutomaticSynchronization\SynchronizationSettings.cs" />
-    <Compile Include="Models\Home\ConnectionData.cs" />
-    <Compile Include="Models\Home\ImportExportData.cs" />
-    <Compile Include="Models\Home\ImportReportData.cs" />
-    <Compile Include="Models\Home\QualifiedLocalization.cs" />
-    <Compile Include="Models\Home\SynchronizationData.cs" />
-    <Compile Include="Models\Home\SynchronizationItem.cs" />
-    <Compile Include="Models\Home\TranslationVerificationData.cs" />
+    <Compile Include="Models\ImportExport\ImportExportData.cs" />
+    <Compile Include="Models\ImportExport\ImportReportData.cs" />
+    <Compile Include="Models\DirectEditing\QualifiedLocalization.cs" />
+    <Compile Include="Models\ManualSynchronization\SynchronizationData.cs" />
+    <Compile Include="Models\ManualSynchronization\SynchronizationItem.cs" />
+    <Compile Include="Models\TranslationVerification\TranslationVerificationData.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\AuthenticationRequest.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\AuthenticationResponse.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\SetAuditsResponse.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\SetAuditsRequest.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\GetAuditsResponse.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\GetAuditsRequest.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\CreateValueRequest.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\DeleteLocalizationsRequest.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\DeleteValueRequest.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\GetAllQualifiedValuesRequest.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\FullContentResponse.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\LocaleValueContainer.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\ExternalSynchronizationManager.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\ExternalSynchronizationConnector.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\IRequest.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\KeyLocaleValueContainer.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\PartJsonConverter.cs" />
-    <Compile Include="Providers\ExternalSynchronizationManager\UpdateCreateValueRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\AuthenticationRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\AuthenticationResponse.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\BasicRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\OverrideHistoryRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\OverrideHistoryResponse.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\PersistResponse.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\PersistRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\ProcessBatchRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\ProcessBatchResponse.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\RewriteHistoryResponse.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\RewriteHistoryRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\ProvideHistoryResponse.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\ProvideHistoryRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\CreateValueRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\DeleteValueRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\GetAllQualifiedValuesRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\FullContentResponse.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\LocaleValueContainer.cs" />
+    <Compile Include="Providers\RemoteAccess\RemoteAccessManager.cs" />
+    <Compile Include="Providers\RemoteAccess\RemoteAccessConnector.cs" />
+    <Compile Include="Providers\RemoteAccess\IRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\KeyLocaleValueContainer.cs" />
+    <Compile Include="Providers\RemoteAccess\PartJsonConverter.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\UpdateCreateValueRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\ProgressHistoryRequest.cs" />
+    <Compile Include="Providers\RemoteAccess\Communication\ProgressHistoryResponse.cs" />
+    <Compile Include="Providers\RemoteAccess\RemoteChainingException.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
+    <Content Include="Scripts\jsdiff.js" />
     <Content Include="Scripts\homebrew.popup.js" />
     <Content Include="Scripts\jquery-1.11.1.js" />
     <Content Include="Scripts\main.app.js" />
+    <Content Include="Scripts\Pages\ManualSynchronization.Index.js" />
+    <Content Include="Scripts\Pages\DirectEditing.Index.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
-    <Content Include="Web.Debug.config">
-      <DependentUpon>Web.config</DependentUpon>
+    <None Include="Web.config.template" />
+    <None Include="Web.Debug.config">
+      <DependentUpon>Web.config.template</DependentUpon>
+    </None>
+    <None Include="Web.Release.config">
+      <DependentUpon>Web.config.template</DependentUpon>
+    </None>
+    <Content Include="Views\Web.config">
+      <SubType>Designer</SubType>
     </Content>
-    <Content Include="Web.Release.config">
-      <DependentUpon>Web.config</DependentUpon>
-    </Content>
-    <Content Include="Views\Web.config" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\Home\EditLocalization.cshtml" />
-    <Content Include="Views\Home\Import.cshtml" />
+    <Content Include="Views\DirectEditing\Index.cshtml" />
+    <Content Include="Views\ImportExport\Import.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Home\Overview.cshtml" />
-    <Content Include="Views\Home\ShowImportExport.cshtml" />
-    <Content Include="Views\Home\ShowSynchronization.cshtml" />
-    <Content Include="Views\Home\VerifyTranslation.cshtml" />
+    <Content Include="Views\ImportExport\Index.cshtml" />
+    <Content Include="Views\ManualSynchronization\Index.cshtml" />
+    <Content Include="Views\TranslationVerification\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="packages.config" />
+    <Content Include="packages.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Models\ExternalSynchronization\" />
+    <Content Include="Views\History\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BLocal\BLocal.csproj">
@@ -150,14 +212,23 @@
       <Name>BLocal</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\History\Broken.cshtml" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" />
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\WebApplications\Microsoft.WebApplication.targets" Condition="false" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
   <Target Name="AfterBuild">
   </Target> -->
+  <Import Project="$(VSToolsPath)\Web\Microsoft.Web.Publishing.targets" Condition="'$(VSToolsPath)' != ''" />
+  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v10.0\Web\Microsoft.Web.Publishing.targets" Condition="false" />
+  <Target Name="BeforeBuild">
+    <TransformXml source="Web.config.template" transform="Web.$(Configuration).config" destination="Web.config" />
+  </Target>
   <Target Name="MvcBuildViews" AfterTargets="AfterBuild" Condition="'$(MvcBuildViews)'=='true'">
     <AspNetCompiler VirtualPath="temp" PhysicalPath="$(WebProjectOutputDir)" />
   </Target>
@@ -167,7 +238,7 @@
         <WebProjectProperties>
           <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
-          <DevelopmentServerPort>26022</DevelopmentServerPort>
+          <DevelopmentServerPort>8479</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
           <IISUrl>
           </IISUrl>
