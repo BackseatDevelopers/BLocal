@@ -52,6 +52,11 @@ namespace BLocal.Providers
             return qualifiedValue;
         }
 
+        public void Persist()
+        {
+            
+        }
+
         public void Reload()
         {
             AllValues = DefaultValues;
@@ -72,27 +77,10 @@ namespace BLocal.Providers
             return AllValues.Values.Select(v => new QualifiedValue(v.Qualifier, v.Value));
         }
 
-        public IEnumerable<LocalizationAudit> GetAudits()
-        {
-            return Enumerable.Empty<LocalizationAudit>();
-        }
-
-        public void SetAudits(IEnumerable<LocalizationAudit> audits)
-        {
-            
-        }
-
         public void DeleteValue(Qualifier.Unique qualifier)
         {
             if (AllValues.ContainsKey(qualifier))
                 AllValues.Remove(qualifier);
-        }
-
-        public void DeleteLocalizationsFor(Part part, string key)
-        {
-            var valuesToDelete = AllValues.Where(kvp => Equals(kvp.Key.Part, part) && kvp.Key.Key == key).ToArray();
-            foreach (var value in valuesToDelete)
-                AllValues.Remove(value.Key);
         }
     }
 }

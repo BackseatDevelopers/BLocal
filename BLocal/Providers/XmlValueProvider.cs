@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.IO;
@@ -12,7 +11,7 @@ namespace BLocal.Providers
     /// <summary>
     /// Provides xml-driven localization. Editing values will get slower with larger amounts of values stored.
     /// </summary>
-    public class XmlValueProvider : ILocalizedValueManager
+    public class XmlValueProvider : ILocalizedValueManager, ILocalizedValueProvider
     {
         private readonly Dictionary<String, GroupNode> _groups = new Dictionary<String, GroupNode>();
         private readonly String _file;
@@ -52,7 +51,6 @@ namespace BLocal.Providers
                         }
                     }
                     var mappingElement = doc.DocumentElement;
-                    Debug.Assert(mappingElement != null, "mappingElement != null");
                     if (mappingElement.Name != "mapping")
                         throw new Exception("Expected root element named 'mapping'");
 
@@ -63,7 +61,6 @@ namespace BLocal.Providers
         }
         private void ProcessPartnode(XmlElement partElement, GroupNode parent)
         {
-            Debug.Assert(partElement.Attributes != null, "partNode.Attributes != null");
             var group = new GroupNode(partElement.Attributes["id"].Value, parent);
             _groups.Add(group.ToString(), group);
             foreach (var elem in partElement.ChildNodes.OfType<XmlElement>())
@@ -79,7 +76,7 @@ namespace BLocal.Providers
             group.Content.Add(textNode.Attributes["key"].Value, languages);
         }
 
-        public void Save()
+        public void Persist()
         {
             lock (_groups)
             {
@@ -168,7 +165,6 @@ namespace BLocal.Providers
                 {
                     var doc = new XmlDocument();
                     doc.Load(importStream);
-                    Debug.Assert(doc.DocumentElement != null, "doc.DocumentElement != null");
                     foreach (var group in doc.DocumentElement.ChildNodes.OfType<XmlElement>())
                     {
                         var groupPath = group.Attributes["path"].InnerText;
@@ -202,7 +198,7 @@ namespace BLocal.Providers
                 }
             }
             if (save)
-                Save();
+                Persist();
         }
 
         #endregion
@@ -264,7 +260,7 @@ namespace BLocal.Providers
         {
             lock (_groups)
                 _groups[qualifier.Part.ToString()].SetValue(qualifier, value);
-            Save();
+            Persist();
         }
 
         #endregion
@@ -275,38 +271,23 @@ namespace BLocal.Providers
         {
             var group = GetOrCreateGroupNode(value.Qualifier.Part);
             group.SetOrCreateValue(value.Qualifier, value.Value);
-            Save();
+            Persist();
         }
 
         public void CreateValue(Qualifier.Unique qualifier, string value)
         {
             var group = GetOrCreateGroupNode(qualifier.Part);
             group.SetOrCreateValue(qualifier, value);
-            Save();
+            Persist();
         }
         public IEnumerable<QualifiedValue> GetAllValuesQualified()
         {
             return _groups.SelectMany(group => group.Value.GetAllQualified()).Select(v => new QualifiedValue(v.Qualifier, v.Value));
         }
 
-        public void SetAudits(IEnumerable<LocalizationAudit> audits)
-        {
-            
-        }
-
         public void DeleteValue(Qualifier.Unique qualifier)
         {
             _groups[qualifier.Part.ToString()].RemoveValue(qualifier, node => { lock (_groups) { _groups.Remove(node.ToString()); } });
-        }
-        public void DeleteLocalizationsFor(Part part, String key)
-        {
-            foreach(var localization in _groups[part.ToString()].GetAllQualified().Where(qv => qv.Qualifier.Key == key).ToArray())
-                DeleteValue(localization.Qualifier);
-        }
-
-        public IEnumerable<LocalizationAudit> GetAudits()
-        {
-            return Enumerable.Empty<LocalizationAudit>();
         }
 
         private GroupNode GetOrCreateGroupNode(Part part)

@@ -1,0 +1,120 @@
+﻿@model BLocal.Web.Manager.Models.ManualSynchronization.SynchronizationData
+@{
+    ViewBag.Title = "Synchronization";
+    ViewBag.PageName = "ManualSynchronization.Index";
+}
+@section Head {
+    <script type="text/javascript">
+        window.urls = window.urls || {};
+        window.urls.current = '@Html.Raw(Url.Action("Index", "ManualSynchronization", new { leftProviderConfigName = Model.Left.Name, rightProviderConfigName = Model.Right.Name }))';
+        window.urls.remove = '@Html.Raw(Url.Action("Remove", "ManualSynchronization", new { leftProviderConfigName = Model.Left.Name, rightProviderConfigName = Model.Right.Name }))';
+        window.urls.duplicate = '@Html.Raw(Url.Action("Duplicate", "ManualSynchronization", new { leftProviderConfigName = Model.Left.Name, rightProviderConfigName = Model.Right.Name }))';
+        window.urls.update = '@Html.Raw(Url.Action("Update", "ManualSynchronization", new { leftProviderConfigName = Model.Left.Name, rightProviderConfigName = Model.Right.Name }))';
+    </script>
+}
+
+<h1>
+    @Html.ActionLink("Home", "Overview", "Home") -
+    Synchronization between <span style="color: @Model.Left.Color">@Model.Left.Name</span>
+    and <span style="color: @Model.Right.Color">@Model.Right.Name</span>
+    as <span class="accent">@Session["author"]</span>
+</h1>
+<section class="general">
+        <input type="checkbox" id="authorcheck" data-author="@Session["author"]" checked="checked"/>
+        <label for="authorcheck">Show only my changes (<span class="accent">@Session["author"]</span>)</label>
+</section>
+<section class="general" data-from="left">
+    <h2>
+        Values existing on
+        <span style="color: @Model.Left.Color">@Model.Left.Name</span>
+        but not on
+        <span style="color: @Model.Right.Color">@Model.Right.Name</span>
+        (@Model.LeftValuesNotRight.Length)
+    </h2>
+    <p>
+        <button class="select">Select All</button>
+        <button class="deselect">Deselect All</button>
+        <button class="delete">Delete from <span style="color: @Model.Left.Color">@Model.Left.Name</span></button>
+        <button class="duplicate">Create on <span style="color: @Model.Right.Color">@Model.Right.Name</span></button>
+    </p>
+    <table cellpadding="0" cellspacing="0"><tbody>
+        @foreach (var value in Model.LeftValuesNotRight) {
+            <tr class="lrvalue" data-author="@value.History.LatestEntry().Author">
+                <td style="white-space: nowrap">
+                    <input type="checkbox" name="values" data-side="left" data-part="@value.Value.Qualifier.Part" data-locale="@value.Value.Qualifier.Locale" data-key="@value.Value.Qualifier.Key"/>
+                </td>
+                <td style="white-space: nowrap;">
+                    @value.Value.Qualifier.Key <br />
+                    <span class="localepart">@value.Value.Qualifier.Locale | @value.Value.Qualifier.Part</span><br />
+                    <span class="localepart">@value.History.LatestEntry().DateTimeUtc.ToLocalTime() - @value.History.LatestEntry().Author</span>
+                </td>
+                <td style="width: 99%;">@value.Value.Value</td>
+            </tr>
+        }
+    </tbody></table>
+</section>
+<section class="general" data-from="right">
+    <h2>
+        Values that exist on
+        <span style="color: @Model.Right.Color">@Model.Right.Name</span>
+        but not on
+        <span style="color: @Model.Left.Color">@Model.Left.Name</span>
+        (@Model.RightValuesNotLeft.Length)
+    </h2>
+    <p>
+        <button class="select">Select All</button>
+        <button class="deselect">Deselect All</button>
+        <button class="delete">Delete from <span style="color: @Model.Right.Color">@Model.Right.Name</span></button>
+        <button class="duplicate">Create on <span style="color: @Model.Left.Color">@Model.Left.Name</span></button>
+    </p>
+    <table cellpadding="0" cellspacing="0"><tbody>
+        @foreach (var value in Model.RightValuesNotLeft)
+        {
+            <tr class="lrvalue" data-author="@value.History.LatestEntry().Author">
+                <td style="white-space: nowrap">
+                    <input type="checkbox" name="values" data-side="right" data-part="@value.Value.Qualifier.Part" data-locale="@value.Value.Qualifier.Locale" data-key="@value.Value.Qualifier.Key"/>
+                </td>
+                <td style="white-space: nowrap;">
+                    @value.Value.Qualifier.Key <br />
+                    <span class="localepart">@value.Value.Qualifier.Locale | @value.Value.Qualifier.Part</span><br />
+                    <span class="localepart">@value.History.LatestEntry().DateTimeUtc.ToLocalTime() - @value.History.LatestEntry().Author</span>
+                </td>
+                <td style="width: 99%;">@value.Value.Value</td>
+            </tr>
+        }
+    </tbody></table>
+</section>
+<section class="general">
+    <h2>Values that differ between the two (@Model.ValueDifferences.Length)</h2>
+    <p>
+        <button class="accept">Execute changes made below</button>
+    </p>
+    @foreach (var value in Model.ValueDifferences)
+    {
+        <section class="difference" data-author="@value.Left.History.LatestEntry().Author|@value.Right.History.LatestEntry().Author">
+            <h2>@value.Left.Value.Qualifier.Key</h2>
+            <p class="localepart">@value.Left.Value.Qualifier.Locale | @value.Left.Value.Qualifier.Part</p>
+            <section class="comparison">
+                <label class="left">
+                    <p class="value">@value.Right.Value.Value</p>
+                    <p>
+                        <input type="checkbox" data-provider="@Model.Left.Name" data-affected-side="right" data-part="@value.Left.Value.Qualifier.Part" data-locale="@value.Left.Value.Qualifier.Locale" data-key="@value.Left.Value.Qualifier.Key" />
+                        Change on <span style="color: @Model.Left.Color">@Model.Left.Name</span> using this value
+                        <br />
+                        @value.Right.History.LatestEntry().DateTimeUtc.ToLocalTime() - @value.Right.History.LatestEntry().Author
+                    </p>
+                </label>
+                <label class="right">
+                    <p class="value">@value.Left.Value.Value</p>
+                    <p>
+                        <input type="checkbox" data-provider="@Model.Right.Name" data-affected-side="left" data-part="@value.Right.Value.Qualifier.Part" data-locale="@value.Right.Value.Qualifier.Locale" data-key="@value.Right.Value.Qualifier.Key" />
+                        Change on <span style="color: @Model.Right.Color">@Model.Right.Name</span> using this value
+                        <br />
+                        @value.Left.History.LatestEntry().DateTimeUtc.ToLocalTime() - @value.Left.History.LatestEntry().Author
+                    </p>
+                </label>
+                <div class="clear"></div>
+            </section>
+        </section>
+    }
+</section>
